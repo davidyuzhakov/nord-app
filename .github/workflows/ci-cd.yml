@@ -76,9 +76,8 @@ jobs:
       - name: Validate deployment configuration
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_HOST_FINGERPRINT: ${{ secrets.VPS_HOST_FINGERPRINT }}
         run: |
-          for variable in VPS_SSH_KEY VPS_HOST_FINGERPRINT VPS_HOST VPS_PORT VPS_USER VPS_APP_DIR COMPOSE_PROJECT_NAME; do
+          for variable in VPS_SSH_KEY VPS_HOST VPS_PORT VPS_USER VPS_APP_DIR COMPOSE_PROJECT_NAME; do
             if [[ -z "${!variable}" ]]; then
               echo "::error::Missing configuration: $variable"
               exit 1
@@ -92,7 +91,6 @@ jobs:
           port: ${{ env.VPS_PORT }}
           username: ${{ env.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          fingerprint: ${{ secrets.VPS_HOST_FINGERPRINT }}
           timeout: 15s
           command_timeout: 30m
           version: '1.8.2'
