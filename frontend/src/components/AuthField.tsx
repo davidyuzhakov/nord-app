@@ -33,6 +33,7 @@ export function AuthField({
         />
         <Input
           id={id}
+          aria-describedby={description ? `${id}-description` : undefined}
           className={cn(
             'auth-input pl-11 pr-4 py-6 bg-transparent dark:bg-transparent text-sm',
             className,

@@ -1,9 +1,11 @@
 import { AuthField } from '@/components/AuthField';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { updateMode } from '@/store/reducers/settingsSlice';
+import { loginUser, registerUser } from '@/store/reducers/userSlice';
 import {
   EyeIcon,
   EyeOffIcon,
@@ -13,8 +15,8 @@ import {
   SunIcon,
   UserRoundIcon,
 } from 'lucide-react';
-import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useState, type FormEvent } from 'react';
+import { Navigate, NavLink } from 'react-router-dom';
 
 export default function AuthPage({
   variant,
@@ -22,9 +24,39 @@ export default function AuthPage({
   variant: 'login' | 'register';
 }) {
   const mode = useAppSelector((state) => state.settings.mode);
+  const { current, loading, initialized } = useAppSelector(
+    (state) => state.user,
+  );
   const dispatch = useAppDispatch();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isRegister = variant === 'register';
+  const isBusy = loading || !initialized;
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isBusy) return;
+
+    const formData = new FormData(event.currentTarget);
+    const credentials = {
+      email: String(formData.get('email') ?? '')
+        .trim()
+        .toLowerCase(),
+      password: String(formData.get('password') ?? ''),
+    };
+
+    if (isRegister) {
+      dispatch(
+        registerUser({
+          ...credentials,
+          fullName: String(formData.get('fullName') ?? '').trim(),
+        }),
+      );
+    } else {
+      dispatch(loginUser(credentials));
+    }
+  };
+
+  if (current) return <Navigate to="/" replace />;
 
   return (
     <main className="relative isolate min-h-dvh">
@@ -85,25 +117,38 @@ export default function AuthPage({
                     'bg-muted text-foreground shadow-xs dark:bg-accent dark:border',
                 )}
               >
-                <NavLink to={to}>{label}</NavLink>
+                <NavLink
+                  to={to}
+                  aria-disabled={isBusy}
+                  tabIndex={isBusy ? -1 : undefined}
+                  onClick={(event) => {
+                    if (isBusy) event.preventDefault();
+                  }}
+                >
+                  {label}
+                </NavLink>
               </Button>
             ))}
           </nav>
 
           <form
-            aria-labelledby="auth-title"
+            aria-label={isRegister ? 'Регистрация' : 'Вход'}
+            aria-busy={isBusy}
             className="space-y-6"
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={handleSubmit}
           >
             {isRegister && (
               <AuthField
                 id="auth-name"
-                name="name"
+                name="fullName"
                 label="Фамилия и имя"
                 icon={UserRoundIcon}
                 type="text"
                 autoComplete="name"
                 placeholder="Иванов Иван"
+                minLength={5}
+                maxLength={100}
+                disabled={isBusy}
                 required
               />
             )}
@@ -119,6 +164,7 @@ export default function AuthPage({
               autoCapitalize="none"
               spellCheck={false}
               placeholder="name@example.com"
+              disabled={isBusy}
               required
             />
 
@@ -130,9 +176,11 @@ export default function AuthPage({
               type={isPasswordVisible ? 'text' : 'password'}
               autoComplete={isRegister ? 'new-password' : 'current-password'}
               placeholder={isRegister ? 'Придумайте пароль' : 'Введите пароль'}
-              minLength={isRegister ? 8 : undefined}
+              minLength={8}
+              maxLength={128}
               description={isRegister ? 'Не менее 8 символов' : undefined}
               className="pr-13"
+              disabled={isBusy}
               required
             >
               <Button
@@ -144,6 +192,7 @@ export default function AuthPage({
                   isPasswordVisible ? 'Скрыть пароль' : 'Показать пароль'
                 }
                 aria-controls="auth-password"
+                disabled={isBusy}
                 onClick={() => setIsPasswordVisible((visible) => !visible)}
               >
                 {isPasswordVisible ? (
@@ -156,15 +205,22 @@ export default function AuthPage({
 
             <Button
               type="submit"
+              disabled={isBusy}
               className="h-13 w-full rounded-xl font-semibold text-white shadow-lg shadow-primary/15 hover:bg-primary/90 active:scale-[0.98]"
             >
-              {isRegister ? 'Создать аккаунт' : 'Войти'}
+              {isBusy ? (
+                <Spinner aria-label="Загрузка" />
+              ) : isRegister ? (
+                'Создать аккаунт'
+              ) : (
+                'Войти'
+              )}
             </Button>
           </form>
         </section>
 
         <footer className="shrink-0 text-center text-xs text-white/60">
-          © 2026 Nord App
+          © Nord App 2026
         </footer>
       </div>
     </main>
