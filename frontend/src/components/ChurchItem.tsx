@@ -60,7 +60,7 @@ export function ChurchItem({
             'flex size-10 shrink-0 items-center justify-center',
             isCurrent
               ? 'rounded-lg bg-primary/10 text-primary'
-              : 'rounded-xl dark:bg-muted bg-muted-foreground/5 text-muted-foreground',
+              : 'rounded-xl bg-muted-foreground/5 text-muted-foreground',
           )}
         >
           <ChurchIcon
@@ -121,7 +121,7 @@ export function ChurchItem({
           >
             Ссылка приглашения
           </Label>
-          <div className="flex items-center gap-2 rounded-lg dark:bg-muted/50 bg-muted-foreground/5 pr-1 pl-3">
+          <div className="flex items-center gap-2 rounded-lg bg-muted-foreground/5 pr-1 pl-3">
             <LinkIcon
               aria-hidden="true"
               size={15}

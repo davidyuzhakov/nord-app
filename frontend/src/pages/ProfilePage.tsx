@@ -6,9 +6,20 @@ import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { updateHideChords, updateMode } from '@/store/reducers/settingsSlice';
+import {
+  SONG_FONT_SIZE,
+  updateHideChords,
+  updateMode,
+  updateSongFontSize,
+} from '@/store/reducers/settingsSlice';
 import { logoutUser } from '@/store/reducers/userSlice';
-import { LogOutIcon, PencilIcon, UserRoundIcon } from 'lucide-react';
+import {
+  LogOutIcon,
+  MinusIcon,
+  PencilIcon,
+  PlusIcon,
+  UserRoundIcon,
+} from 'lucide-react';
 
 const churches = [
   {
@@ -29,7 +40,9 @@ const churches = [
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
   const { current: user, loading } = useAppSelector((state) => state.user);
-  const { mode, hideChords } = useAppSelector((state) => state.settings);
+  const { mode, hideChords, songFontSize } = useAppSelector(
+    (state) => state.settings,
+  );
 
   const logoutHandler = () => {
     if (window.confirm('Вы действительно хотите выйти из аккаунта?')) {
@@ -117,6 +130,50 @@ export default function ProfilePage() {
               dispatch(updateHideChords(checked ? 'off' : 'on'))
             }
           />
+        </div>
+
+        <Separator className="bg-border/60" />
+
+        <div className="flex items-center justify-between gap-4 pt-4">
+          <div className="space-y-1">
+            <span id="profile-song-font-size-label" className="text-sm">
+              Размер текста песни
+            </span>
+          </div>
+          <div
+            role="group"
+            aria-labelledby="profile-song-font-size-label"
+            className="flex shrink-0 items-center gap-1 rounded-lg bg-muted-foreground/5 p-0.5"
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Уменьшить размер текста песни"
+              disabled={songFontSize <= SONG_FONT_SIZE.min}
+              className="disabled:opacity-30"
+              onClick={() => dispatch(updateSongFontSize(songFontSize - 1))}
+            >
+              <MinusIcon aria-hidden="true" />
+            </Button>
+            <output
+              aria-live="polite"
+              className="min-w-10 text-center text-xs font-medium tabular-nums"
+            >
+              {songFontSize} px
+            </output>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Увеличить размер текста песни"
+              className="disabled:opacity-30"
+              disabled={songFontSize >= SONG_FONT_SIZE.max}
+              onClick={() => dispatch(updateSongFontSize(songFontSize + 1))}
+            >
+              <PlusIcon aria-hidden="true" />
+            </Button>
+          </div>
         </div>
       </section>
 

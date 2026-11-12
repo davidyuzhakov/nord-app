@@ -29,7 +29,9 @@ export function Song({
   const [currentKey, setCurrentKey] = useState<KeyType>(savedKey);
   const [isCopied, setIsCopied] = useState(false);
   const dispatch = useAppDispatch();
-  const hideChords = useAppSelector((state) => state.settings.hideChords);
+  const { hideChords, songFontSize } = useAppSelector(
+    (state) => state.settings,
+  );
 
   const sections = useMemo(() => {
     const parsed = tokenizeSection(parseSongSections(song.text ?? ''));
@@ -306,8 +308,12 @@ export function Song({
               .map((line, lineIdx) => (
                 <pre
                   key={lineIdx}
-                  style={{ fontFamily: 'Open Sans Variable' }}
-                  className={`text-[14px] font-medium whitespace-pre-wrap text-pretty ${hideChords ? 'leading-6' : ''}`}
+                  style={{
+                    fontFamily: 'Open Sans Variable',
+                    fontSize: songFontSize,
+                    lineHeight: 1.7,
+                  }}
+                  className="font-medium whitespace-pre-wrap text-pretty"
                 >
                   {line.tokens.map((t, i) =>
                     t.type === 'chord' ? (
