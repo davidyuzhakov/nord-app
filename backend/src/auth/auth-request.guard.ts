@@ -14,7 +14,7 @@ export class AuthRequestGuard implements CanActivate {
     const request = http.getRequest<Request>();
     http.getResponse<Response>().setHeader('Cache-Control', 'no-store');
 
-    if (request.method !== 'POST') return true;
+    if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return true;
 
     let origin = request.get('origin');
     if (origin === undefined) {

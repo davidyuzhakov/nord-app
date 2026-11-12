@@ -11,6 +11,10 @@ export interface RegisterDto extends LoginDto {
   fullName: string;
 }
 
+export interface UpdateUserDto {
+  fullName: string;
+}
+
 const requestConfig = { timeout: 15000 };
 
 async function getCurrentUser() {
@@ -39,6 +43,14 @@ async function authenticate(
 
 export const authService = {
   me: getCurrentUser,
+  updateMe: async ({ fullName }: UpdateUserDto) => {
+    const { data } = await apiInstance.patch<User>(
+      '/auth/me',
+      { fullName },
+      requestConfig,
+    );
+    return data;
+  },
   login: (payload: LoginDto) => authenticate('/auth/login', payload),
   register: (payload: RegisterDto) => authenticate('/auth/register', payload),
   logout: async () => {

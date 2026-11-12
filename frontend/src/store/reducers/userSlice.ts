@@ -4,6 +4,7 @@ import {
   authService,
   type LoginDto,
   type RegisterDto,
+  type UpdateUserDto,
 } from '@/services/authService';
 import { getAuthError, type AuthError } from '@/utils/getAuthError';
 
@@ -74,6 +75,22 @@ export const registerUser = createAsyncThunk<
   { condition: (_, { getState }) => !getState().user.loading },
 );
 
+export const updateUser = createAsyncThunk<
+  User,
+  UpdateUserDto,
+  UserThunkConfig
+>(
+  'user/update',
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await authService.updateMe(payload);
+    } catch (error) {
+      return rejectWithValue(getAuthError(error));
+    }
+  },
+  { condition: (_, { getState }) => !getState().user.loading },
+);
+
 export const logoutUser = createAsyncThunk<null, void, UserThunkConfig>(
   'user/logout',
   async (_, { rejectWithValue }) => {
@@ -105,6 +122,7 @@ export const userSlice = createSlice({
           fetchCurrentUser.pending,
           loginUser.pending,
           registerUser.pending,
+          updateUser.pending,
           logoutUser.pending,
         ),
         (state) => {
@@ -117,6 +135,7 @@ export const userSlice = createSlice({
           fetchCurrentUser.fulfilled,
           loginUser.fulfilled,
           registerUser.fulfilled,
+          updateUser.fulfilled,
           logoutUser.fulfilled,
         ),
         (state, action) => {
@@ -130,6 +149,7 @@ export const userSlice = createSlice({
           fetchCurrentUser.rejected,
           loginUser.rejected,
           registerUser.rejected,
+          updateUser.rejected,
           logoutUser.rejected,
         ),
         (state, action) => {

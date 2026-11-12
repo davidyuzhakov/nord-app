@@ -12,9 +12,10 @@ import {
   SESSION_ABSOLUTE_TIMEOUT_MS,
   SESSION_IDLE_TIMEOUT_MS,
 } from './auth.config';
-import type { AuthSession } from './auth.types';
+import type { AuthSession, AuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 const userSelect = { id: true, email: true, fullName: true } as const;
 
@@ -73,6 +74,14 @@ export class AuthService {
       user: { id: user.id, email: user.email, fullName: user.fullName },
       ...session,
     };
+  }
+
+  async updateUser(userId: string, dto: UpdateUserDto): Promise<AuthUser> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { fullName: dto.fullName },
+      select: userSelect,
+    });
   }
 
   async logout(token?: string): Promise<void> {

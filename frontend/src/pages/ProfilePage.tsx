@@ -1,6 +1,8 @@
 import { ChurchItem } from '@/components/ChurchItem';
+import { Modal } from '@/components/Modal';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
@@ -12,7 +14,7 @@ import {
   updateMode,
   updateSongFontSize,
 } from '@/store/reducers/settingsSlice';
-import { logoutUser } from '@/store/reducers/userSlice';
+import { logoutUser, updateUser } from '@/store/reducers/userSlice';
 import {
   LogOutIcon,
   MinusIcon,
@@ -20,6 +22,7 @@ import {
   PlusIcon,
   UserRoundIcon,
 } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
 
 const churches = [
   {
@@ -43,6 +46,16 @@ export default function ProfilePage() {
   const { mode, hideChords, songFontSize } = useAppSelector(
     (state) => state.settings,
   );
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [inputName, setInputName] = useState('');
+
+  const handleNameSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (loading || !user) return;
+
+    await dispatch(updateUser({ fullName: inputName.trim() })).unwrap();
+    setIsEditOpen(false);
+  };
 
   const logoutHandler = () => {
     if (window.confirm('Вы действительно хотите выйти из аккаунта?')) {
@@ -75,16 +88,67 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="rounded-full text-muted-foreground border"
-          aria-label="Редактировать имя"
+        <Modal
+          isOpen={isEditOpen}
+          onOpenChange={(isOpen) => {
+            if (loading) return;
+            if (isOpen) setInputName(user?.fullName ?? '');
+            setIsEditOpen(isOpen);
+          }}
           title="Редактировать имя"
+          trigger={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="rounded-full text-muted-foreground border"
+              aria-label="Редактировать имя"
+              title="Редактировать имя"
+              disabled={loading || !user}
+            >
+              <PencilIcon aria-hidden="true" />
+            </Button>
+          }
         >
-          <PencilIcon aria-hidden="true" />
-        </Button>
+          <form
+            onSubmit={handleNameSubmit}
+            aria-busy={loading}
+            className="space-y-4 pt-2"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="profile-full-name">Фамилия и имя</Label>
+              <Input
+                id="profile-full-name"
+                name="fullName"
+                autoComplete="name"
+                value={inputName}
+                onChange={(e) => setInputName(e.target.value)}
+                minLength={5}
+                maxLength={100}
+                required
+                disabled={loading}
+                className="h-10 bg-secondary dark:bg-input/30"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading}
+                onClick={() => setIsEditOpen(false)}
+              >
+                Отмена
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading || user?.fullName === inputName}
+              >
+                {loading && <Spinner aria-label="Сохранение имени" />}
+                Сохранить
+              </Button>
+            </div>
+          </form>
+        </Modal>
       </section>
 
       <section
@@ -200,10 +264,10 @@ export default function ProfilePage() {
         variant="destructive"
         className="mr-0 w-full"
         disabled={loading}
-        aria-busy={loading}
+        aria-busy={loading && !isEditOpen}
         onClick={logoutHandler}
       >
-        {loading ? (
+        {loading && !isEditOpen ? (
           <Spinner aria-label="Выход из аккаунта" />
         ) : (
           <LogOutIcon aria-hidden="true" />

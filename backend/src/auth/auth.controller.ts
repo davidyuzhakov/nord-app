@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -16,6 +17,7 @@ import { AuthService } from './auth.service';
 import type { AuthenticatedRequest, AuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import {
   clearSessionCookie,
   getSessionToken,
@@ -72,6 +74,15 @@ export class AuthController {
 
     setSessionCookie(response, token, expiresAt);
     return session.user;
+  }
+
+  @Patch('me')
+  @UseGuards(SessionGuard)
+  updateMe(
+    @Req() request: AuthenticatedRequest,
+    @Body() dto: UpdateUserDto,
+  ): Promise<AuthUser> {
+    return this.authService.updateUser(request.auth.session.userId, dto);
   }
 
   @Post('logout')
