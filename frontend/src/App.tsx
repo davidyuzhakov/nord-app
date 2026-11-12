@@ -7,13 +7,13 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Loading } from './components/Loading';
 import { Button } from './components/ui/button';
 
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const MutationProgramPage = lazy(() => import('./pages/MutationProgramPage'));
 const MutationSongPage = lazy(() => import('./pages/MutationSongPage'));
 const SongDetailPage = lazy(() => import('./pages/SongDetailPage'));
 const LiveModePage = lazy(() => import('./pages/LiveModePage'));
 const SongsPage = lazy(() => import('./pages/SongsPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const AuthPage = lazy(() => import('./pages/AuthPage'));
 
 function App() {
   const mode = useAppSelector((state) => state.settings.mode);
@@ -34,8 +34,17 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="live-mode" element={<LiveModePage />} />
           <Route path="songs" element={<SongsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="song/:id" element={<SongDetailPage />} />
         </Route>
+        <Route
+          path="login"
+          element={<AuthPage key="login" variant="login" />}
+        />
+        <Route
+          path="register"
+          element={<AuthPage key="register" variant="register" />}
+        />
         <Route
           path="*"
           element={
@@ -60,8 +69,6 @@ function App() {
             </div>
           }
         />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
         <Route element={<SectionLayout title="Новая программа" />}>
           <Route path="program/create" element={<MutationProgramPage />} />
         </Route>

@@ -130,6 +130,13 @@
   }
 }
 
+.auth-input:is(:autofill, :-webkit-autofill) {
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--foreground);
+}
+
 .text-textarea {
   height: 400px;
   max-height: 400px;

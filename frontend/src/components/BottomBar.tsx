@@ -1,4 +1,4 @@
-import { HomeIcon, Music4Icon, RadioIcon } from 'lucide-react';
+import { HomeIcon, Music4Icon, RadioIcon, User2Icon } from 'lucide-react';
 import type React from 'react';
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -25,11 +25,11 @@ const navLink: INavLink[] = [
     to: '/songs',
     icon: <Music4Icon size={23} className="stroke-inherit" />,
   },
-  // {
-  //   title: 'Профиль',
-  //   to: '/profile',
-  //   icon: <User2Icon size={23} className="stroke-inherit" />,
-  // },
+  {
+    title: 'Профиль',
+    to: '/profile',
+    icon: <User2Icon size={23} className="stroke-inherit" />,
+  },
 ];
 
 export function BottomBar() {
