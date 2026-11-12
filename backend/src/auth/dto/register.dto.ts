@@ -6,7 +6,7 @@ export class RegisterDto extends LoginDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @Length(5, 100, {
-    message: 'Пароль должен содержать от 8 до 128 символов',
+    message: 'Имя должно содержать от 5 до 100 символов',
   })
   fullName!: string;
 }

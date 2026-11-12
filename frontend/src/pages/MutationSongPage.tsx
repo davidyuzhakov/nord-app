@@ -256,7 +256,7 @@ export default function MutationSongPage() {
               disabled={loading}
               variant="destructive"
               onClick={handleDelete}
-              className="capitalize bg-destructive/10! text-destructive text-base py-5"
+              className="capitalize text-base py-5"
             >
               удалить
             </Button>
