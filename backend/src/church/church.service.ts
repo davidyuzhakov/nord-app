@@ -27,6 +27,18 @@ export class ChurchService {
     return memberships.map(({ church }) => church);
   }
 
+  async findByInviteToken(inviteToken: string) {
+    const church = await this.prisma.church.findUnique({
+      where: { inviteToken },
+      select: { name: true },
+    });
+    if (!church) {
+      throw new NotFoundException('Приглашение недействительно');
+    }
+
+    return church;
+  }
+
   create(userId: string, dto: CreateChurchDto) {
     return this.runTransaction(async (tx) => {
       const church = await tx.church.create({

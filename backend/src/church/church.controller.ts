@@ -30,6 +30,11 @@ export class ChurchController {
     return this.churchService.findAll(request.auth.session.userId);
   }
 
+  @Get('invite/:inviteToken')
+  findByInviteToken(@Param() dto: JoinChurchDto) {
+    return this.churchService.findByInviteToken(dto.inviteToken);
+  }
+
   @Post()
   create(@Req() request: AuthenticatedRequest, @Body() dto: CreateChurchDto) {
     return this.churchService.create(request.auth.session.userId, dto);
