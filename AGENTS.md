@@ -1,5 +1,18 @@
 # Repository Guidelines
 
+## Task Scope & Boundaries
+
+- Implement only explicitly requested changes. Do not add features, integrations, or improvements on your own.
+- For design, layout, or UI tasks, limit changes to components, styles, and local UI state, such as opening forms or switching tabs. Preserve existing application behavior.
+- Do not add API calls, business logic, Redux state, data models, session handling, automatic redirects, or backend changes to UI tasks unless explicitly requested.
+- Treat user flow descriptions in UI tasks as context for the interface, not authorization to implement the entire flow.
+- An existing API or an easy integration does not authorize connecting functionality.
+- Do not perform unrelated refactoring, fix neighboring code, update dependencies, or prepare for future features. Include only imports and component wiring necessary for the requested change.
+- If it is unclear whether the user wants UI only or a full integration, clarify before implementing the integration.
+- If completing the task requires expanding the agreed scope, explain the specific need and obtain approval before expanding it. Work independently within the agreed scope.
+- Answer requests for advice or approach discussions without editing files unless implementation is explicitly requested.
+- Before editing, briefly state the intended changes. Stop when the requested work is complete.
+
 ## Project Structure & Module Organization
 
 - `backend/`: NestJS and TypeScript API. Feature modules live in `src/song/` and `src/program/`; database integration lives in `src/prisma/`.
