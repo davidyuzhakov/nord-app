@@ -4,7 +4,7 @@ import type { LineToken, SongSection } from './parseSongSections';
 const CHORD_REGEX =
   /(^|\s|[([])([A-GH](?:#|b)?(?:maj|min|m|dim|aug|sus|add)?\d*(?:\/[A-GH](?:#|b)?)?)(?=$|\s|[)\]])/g;
 
-function tokenizeLine(line: string): LineToken[] {
+export function tokenizeLine(line: string): LineToken[] {
   const tokens: LineToken[] = [];
   let lastIndex = 0;
 

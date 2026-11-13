@@ -108,7 +108,11 @@ export default function SongDetailPage() {
           <h2 className="text-[22px] font-semibold truncate">{current.name}</h2>
         </div>
         <button
-          onClick={() => navigate(`/song/${current.id}/edit`)}
+          onClick={() =>
+            navigate(
+              `/song/${current.id}/edit${programId !== undefined ? `?programId=${programId}` : ''}`,
+            )
+          }
           type="button"
           className="p-2 rounded-md bg-secondary/20 backdrop-blur-xs drop-shadow-xs border"
         >

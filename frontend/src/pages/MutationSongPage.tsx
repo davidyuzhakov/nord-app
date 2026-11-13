@@ -1,22 +1,29 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { KeyType, SongStructureItem } from '@/models/Song';
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import type { KeyType, Song, SongStructureItem } from '@/models/Song';
+import type { ProgramSong } from '@/models/Program';
+import { useEffect, useState, type SetStateAction } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Tonality } from '@/components/Tonality';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { Structure } from '@/components/Structure';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import {
   createSongThunk,
   deleteSongThunk,
   fetchSong,
   updateSongThunk,
 } from '@/store/reducers/songSlice';
+import {
+  fetchProgramSong,
+  updateProgramSongThunk,
+} from '@/store/reducers/programSlice';
+import { transposeSongText } from '@/utils/transposeSong';
 import { useGoBack } from '@/hooks/useGoBack';
 import { Loading } from '@/components/Loading';
+import { toast } from 'sonner';
 
 interface FormState {
   name: string;
@@ -26,96 +33,184 @@ interface FormState {
   danceVideo: string;
 }
 
+interface EditingSong {
+  song: Song;
+  programSong?: ProgramSong;
+}
+
+const EMPTY_FORM_VALUES: FormState = {
+  name: '',
+  bpm: 0,
+  text: '',
+  audio: '',
+  danceVideo: '',
+};
+
 export default function MutationSongPage() {
   const { id } = useParams();
+  const [params] = useSearchParams();
+  const programId = params.has('programId')
+    ? Number(params.get('programId'))
+    : undefined;
   const goBack = useGoBack();
   const isEdit = Boolean(id);
   const dispatch = useAppDispatch();
-  const { current, loading } = useAppSelector((state) => state.song);
   const navigate = useNavigate();
 
-  const [droppedItems, setDroppedItems] = useState<SongStructureItem[]>(
-    current?.structure || [],
-  );
-  const [songKey, setSongKey] = useState(current?.key || 'C');
-  const { register, reset, handleSubmit } = useForm<FormState>({
-    defaultValues: {
-      name: current?.name ?? '',
-      bpm: current?.bpm ?? 0,
-      text: current?.text ?? '',
-    },
+  const [editingSong, setEditingSong] = useState<EditingSong | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [droppedItems, setDroppedItems] = useState<SongStructureItem[]>([]);
+  const [songKey, setSongKey] = useState<KeyType>('C');
+  const {
+    register,
+    reset,
+    handleSubmit,
+    getValues,
+    setValue,
+    formState: { isSubmitting },
+  } = useForm<FormState>({
+    defaultValues: EMPTY_FORM_VALUES,
   });
 
   useEffect(() => {
-    if (!id) return;
+    let active = true;
+    setEditingSong(null);
+    setLoadFailed(false);
+
+    if (!id) {
+      reset(EMPTY_FORM_VALUES);
+      setSongKey('C');
+      setDroppedItems([]);
+      return;
+    }
 
     const load = async () => {
-      const song = await dispatch(fetchSong(Number(id))).unwrap();
+      try {
+        const programSong =
+          programId !== undefined
+            ? await dispatch(
+                fetchProgramSong({ programId, songId: Number(id) }),
+              ).unwrap()
+            : undefined;
+        const song = programSong
+          ? programSong.song
+          : await dispatch(fetchSong(Number(id))).unwrap();
 
-      reset({
-        name: song.name,
-        bpm: song.bpm,
-        text: song.text,
-        audio: song.audio ?? '',
-        danceVideo: song.danceVideo ?? '',
-      });
+        if (!active) return;
 
-      setSongKey(song.key);
-      setDroppedItems(song.structure ?? []);
+        const key = programSong?.key ?? song.key;
+        reset({
+          name: song.name,
+          bpm: song.bpm,
+          text: transposeSongText(song.text, song.key, key),
+          audio: song.audio ?? '',
+          danceVideo: song.danceVideo ?? '',
+        });
+
+        setSongKey(key);
+        setDroppedItems(song.structure ?? []);
+        setEditingSong({ song, programSong });
+      } catch (error) {
+        if (!active) return;
+        console.log(error);
+        setLoadFailed(true);
+      }
     };
 
     load();
-  }, [id, dispatch, reset]);
 
-  if (isEdit && !current && loading) return <Loading />;
+    return () => {
+      active = false;
+    };
+  }, [id, programId, dispatch, reset]);
 
-  if (isEdit && !loading && !current)
+  if (isEdit && loadFailed)
     return (
       <p className="text-center text-muted-foreground text-lg py-2">
-        Песня не найдена
+        Не удалось загрузить хвалу
       </p>
     );
 
+  if (
+    isEdit &&
+    (!editingSong ||
+      editingSong.song.id !== Number(id) ||
+      editingSong.programSong?.programId !== programId)
+  )
+    return <Loading />;
+
+  const handleKeyChange = (value: SetStateAction<KeyType>) => {
+    const key = typeof value === 'function' ? value(songKey) : value;
+
+    if (editingSong?.programSong) {
+      setValue('text', transposeSongText(getValues('text'), songKey, key), {
+        shouldDirty: true,
+      });
+    }
+
+    setSongKey(key);
+  };
+
   const onSubmit: SubmitHandler<FormState> = async (data) => {
-    if (!isEdit) {
-      try {
-        await dispatch(
-          createSongThunk({
-            ...data,
-            key: songKey,
-            bpm: Number(data.bpm),
-            structure: droppedItems,
-            danceVideo:
-              data.danceVideo.trim().length > 0 ? data.danceVideo : undefined,
-            audio: data.audio.trim().length > 0 ? data.audio : undefined,
-          }),
-        ).unwrap();
+    const songData = {
+      ...data,
+      key: songKey,
+      bpm: Number(data.bpm),
+      structure: droppedItems,
+      danceVideo:
+        data.danceVideo.trim().length > 0 ? data.danceVideo : undefined,
+      audio: data.audio.trim().length > 0 ? data.audio : undefined,
+    };
+
+    try {
+      if (!isEdit) {
+        await dispatch(createSongThunk(songData)).unwrap();
         navigate('/songs');
-      } catch (error) {
-        console.log(error);
-        alert('Не удалось создать хвалу. Попробуйте позже');
+        return;
       }
-    } else {
-      try {
+
+      if (!editingSong) return;
+
+      const { song, programSong } = editingSong;
+      let text = data.text;
+
+      if (programSong) {
+        const transposedText = transposeSongText(song.text, song.key, songKey);
+        text =
+          data.text === transposedText
+            ? song.text
+            : transposeSongText(data.text, songKey, song.key);
+      }
+
+      await dispatch(
+        updateSongThunk({
+          id: song.id,
+          data: {
+            ...songData,
+            key: programSong ? song.key : songKey,
+            text,
+          },
+        }),
+      ).unwrap();
+
+      if (programSong && songKey !== (programSong.key ?? song.key)) {
         await dispatch(
-          updateSongThunk({
-            id: Number(id),
-            data: {
-              ...data,
-              key: songKey,
-              bpm: Number(data.bpm),
-              structure: droppedItems,
-              danceVideo:
-                data.danceVideo.trim().length > 0 ? data.danceVideo : undefined,
-              audio: data.audio.trim().length > 0 ? data.audio : undefined,
-            },
+          updateProgramSongThunk({
+            programId: programSong.programId,
+            songId: song.id,
+            data: { key: songKey },
           }),
         ).unwrap();
-        goBack();
-      } catch (error) {
-        console.log(error);
-        alert('Не удалось обновить хвалу. Попробуйте позже');
       }
+
+      goBack();
+    } catch (error) {
+      console.log(error);
+      toast.error(
+        isEdit
+          ? 'Не удалось обновить хвалу. Попробуйте позже'
+          : 'Не удалось создать хвалу. Попробуйте позже',
+      );
     }
   };
 
@@ -170,13 +265,13 @@ export default function MutationSongPage() {
               KEY
             </Label>
             <div className="flex gap-2">
-              <Tonality currentKey={songKey} setCurrentKey={setSongKey} />
+              <Tonality currentKey={songKey} setCurrentKey={handleKeyChange} />
               <Button
                 onClick={() => {
                   if (songKey.includes('m')) {
-                    setSongKey(songKey.replace('m', '') as KeyType);
+                    handleKeyChange(songKey.replace('m', '') as KeyType);
                   } else {
-                    setSongKey(`${songKey}m` as KeyType);
+                    handleKeyChange(`${songKey}m` as KeyType);
                   }
                 }}
                 className={`${
@@ -253,7 +348,7 @@ export default function MutationSongPage() {
           {isEdit && (
             <Button
               type="button"
-              disabled={loading}
+              disabled={isSubmitting}
               variant="destructive"
               onClick={handleDelete}
               className="capitalize text-base py-5"
@@ -263,7 +358,7 @@ export default function MutationSongPage() {
           )}
           <Button
             type="submit"
-            disabled={loading}
+            disabled={isSubmitting}
             className="bg-primary/15 text-primary capitalize text-base py-5"
           >
             сохранить

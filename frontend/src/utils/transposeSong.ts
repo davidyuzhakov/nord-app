@@ -1,9 +1,12 @@
-import { Chord, Note } from 'tonal';
+import { Chord, Note, distance } from 'tonal';
+import type { KeyType } from '@/models/Song';
 import type { SongSection } from './parseSongSections';
-import { changeChordHtoB } from './normalizeKeyForTonal';
+import { changeChordHtoB, normalizeKeyForTonal } from './normalizeKeyForTonal';
+import { tokenizeLine } from './tokenize';
 
 function transposeChord(chord: string, interval: string): string {
   const transposed = Chord.transpose(changeChordHtoB(chord), interval);
+  if (!transposed) return chord;
 
   const [main, bass] = transposed.split('/');
 
@@ -21,6 +24,32 @@ function transposeChord(chord: string, interval: string): string {
   const simplifiedBass = Note.simplify(bass);
 
   return `${simplifiedMain}/${simplifiedBass}`;
+}
+
+export function transposeSongText(
+  text: string,
+  fromKey: KeyType,
+  toKey: KeyType,
+): string {
+  const fromNote = normalizeKeyForTonal(fromKey);
+  const toNote = normalizeKeyForTonal(toKey);
+  if (fromNote === toNote) return text;
+
+  const interval = distance(fromNote, toNote);
+  if (!interval) return text;
+
+  return text
+    .split('\n')
+    .map((line) =>
+      tokenizeLine(line)
+        .map((token) =>
+          token.type === 'chord'
+            ? transposeChord(token.value, interval)
+            : token.value,
+        )
+        .join(''),
+    )
+    .join('\n');
 }
 
 export function transposeSections(
