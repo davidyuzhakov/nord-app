@@ -17,7 +17,12 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
-const userSelect = { id: true, email: true, fullName: true } as const;
+const userSelect = {
+  id: true,
+  email: true,
+  fullName: true,
+  activeChurchId: true,
+} as const;
 
 @Injectable()
 export class AuthService {
@@ -71,7 +76,12 @@ export class AuthService {
 
     const session = await this.createSession(this.prisma, user.id);
     return {
-      user: { id: user.id, email: user.email, fullName: user.fullName },
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        activeChurchId: user.activeChurchId,
+      },
       ...session,
     };
   }

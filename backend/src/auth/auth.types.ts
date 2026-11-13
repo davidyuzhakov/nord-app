@@ -1,7 +1,10 @@
 import type { Request } from 'express';
 import type { Session, User } from '@/generated/prisma/client';
 
-export type AuthUser = Pick<User, 'id' | 'email' | 'fullName'>;
+export type AuthUser = Pick<
+  User,
+  'id' | 'email' | 'fullName' | 'activeChurchId'
+>;
 
 export type AuthSession = Session & { user: AuthUser };
 

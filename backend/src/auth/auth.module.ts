@@ -9,6 +9,6 @@ import { SessionGuard } from './session.guard';
   imports: [PrismaModule],
   controllers: [AuthController],
   providers: [AuthService, AuthRequestGuard, SessionGuard],
-  exports: [AuthService, SessionGuard],
+  exports: [AuthService, AuthRequestGuard, SessionGuard],
 })
 export class AuthModule {}
