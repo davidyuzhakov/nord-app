@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchChurches, switchChurchThunk } from '@/store/reducers/churchSlice';
 import {
   SONG_FONT_SIZE,
   updateHideChords,
@@ -22,32 +23,28 @@ import {
   PlusIcon,
   UserRoundIcon,
 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
-
-const churches = [
-  {
-    id: 'blagodat',
-    name: 'Благодать север',
-    isCurrent: false,
-    isCreator: true,
-    inviteUrl: 'https://nord-app.ru/invite/demo-blagodat-n7k2',
-  },
-  {
-    id: 'new-life',
-    name: 'Новая жизнь',
-    isCurrent: true,
-    isCreator: false,
-  },
-];
+import { useEffect, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { current: user, loading } = useAppSelector((state) => state.user);
+  const { items: churches, loading: churchesLoading } = useAppSelector(
+    (state) => state.church,
+  );
   const { mode, hideChords, songFontSize } = useAppSelector(
     (state) => state.settings,
   );
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [inputName, setInputName] = useState('');
+  const [switchingChurchId, setSwitchingChurchId] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    dispatch(fetchChurches());
+  }, [dispatch]);
 
   const handleNameSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,6 +52,20 @@ export default function ProfilePage() {
 
     await dispatch(updateUser({ fullName: inputName.trim() })).unwrap();
     setIsEditOpen(false);
+  };
+
+  const handleChurchSwitch = async (churchId: string) => {
+    if (
+      loading ||
+      churchesLoading ||
+      switchingChurchId ||
+      churchId === user?.activeChurchId
+    )
+      return;
+
+    setSwitchingChurchId(churchId);
+    await dispatch(switchChurchThunk(churchId));
+    setSwitchingChurchId(null);
   };
 
   const logoutHandler = () => {
@@ -104,7 +115,7 @@ export default function ProfilePage() {
               className="rounded-full text-muted-foreground border"
               aria-label="Редактировать имя"
               title="Редактировать имя"
-              disabled={loading || !user}
+              disabled={loading || churchesLoading || !user}
             >
               <PencilIcon aria-hidden="true" />
             </Button>
@@ -245,25 +256,62 @@ export default function ProfilePage() {
         aria-labelledby="profile-churches-title"
         className="space-y-5 dark:bg-secondary/30 bg-secondary/60 p-4 rounded-lg"
       >
-        <h2
-          id="profile-churches-title"
-          className="text-xs font-medium text-muted-foreground"
-        >
-          Мои церкви
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2
+            id="profile-churches-title"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            Мои церкви
+          </h2>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="py-0 h-auto gap-1 px-2 text-xs text-muted-foreground hover:bg-transparent"
+            disabled={loading || churchesLoading}
+            onClick={() => navigate('/welcome')}
+          >
+            <PlusIcon aria-hidden="true" className="size-3.5" />
+            Создать церковь
+          </Button>
+        </div>
 
-        <ul className="divide-y divide-border/60 rounded-xl">
-          {churches.map((church) => (
-            <ChurchItem key={church.id} {...church} />
-          ))}
-        </ul>
+        {churchesLoading && churches.length === 0 ? (
+          <p
+            role="status"
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+          >
+            <Spinner aria-hidden="true" />
+            Загрузка церквей
+          </p>
+        ) : (
+          <ul className="divide-y divide-border/60 rounded-xl">
+            {churches.map((church) => (
+              <ChurchItem
+                key={church.id}
+                id={church.id}
+                name={church.name}
+                isCurrent={church.id === user?.activeChurchId}
+                isCreator={church.createdById === user?.id}
+                onSwitch={() => handleChurchSwitch(church.id)}
+                isSwitching={switchingChurchId === church.id}
+                disabled={loading || churchesLoading || !!switchingChurchId}
+                inviteUrl={
+                  church.createdById === user?.id
+                    ? `${window.location.origin}/connect/${encodeURIComponent(church.inviteToken)}`
+                    : undefined
+                }
+              />
+            ))}
+          </ul>
+        )}
       </section>
 
       <Button
         type="button"
         variant="destructive"
         className="mr-0 w-full"
-        disabled={loading}
+        disabled={loading || churchesLoading}
         aria-busy={loading && !isEditOpen}
         onClick={logoutHandler}
       >

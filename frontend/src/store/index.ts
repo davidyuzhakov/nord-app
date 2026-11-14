@@ -3,6 +3,7 @@ import { songSlice } from './reducers/songSlice';
 import { programSlice } from './reducers/programSlice';
 import { settingsSlice } from './reducers/settingsSlice';
 import { userSlice } from './reducers/userSlice';
+import { churchSlice } from './reducers/churchSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     program: programSlice.reducer,
     settings: settingsSlice.reducer,
     user: userSlice.reducer,
+    church: churchSlice.reducer,
   },
 });
 

@@ -1,4 +1,9 @@
-import { createAsyncThunk, createSlice, isAnyOf } from '@reduxjs/toolkit';
+import {
+  createAsyncThunk,
+  createSlice,
+  isAnyOf,
+  type PayloadAction,
+} from '@reduxjs/toolkit';
 import type { User } from '@/models/User';
 import {
   authService,
@@ -111,6 +116,9 @@ export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
+    setActiveChurchId: (state, action: PayloadAction<string | null>) => {
+      if (state.current) state.current.activeChurchId = action.payload;
+    },
     clearUserError: (state) => {
       state.error = null;
     },
@@ -161,4 +169,4 @@ export const userSlice = createSlice({
   },
 });
 
-export const { clearUserError } = userSlice.actions;
+export const { clearUserError, setActiveChurchId } = userSlice.actions;

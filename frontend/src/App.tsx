@@ -4,6 +4,7 @@ import { Layout } from './layout/Layout';
 import { SectionLayout } from './layout/SectionLayout';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { clearUserError, fetchCurrentUser } from './store/reducers/userSlice';
+import { clearChurchError } from './store/reducers/churchSlice';
 import { lazy, Suspense, useEffect } from 'react';
 import { Loading } from './components/Loading';
 import { Button } from './components/ui/button';
@@ -25,6 +26,9 @@ const ConnectPage = lazy(() => import('./pages/ConnectPage'));
 function App() {
   const mode = useAppSelector((state) => state.settings.mode);
   const error = useAppSelector((state) => state.user.error);
+  const { error: churchError, inviteError } = useAppSelector(
+    (state) => state.church,
+  );
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -38,6 +42,14 @@ function App() {
     toast.error(error.messages.join('\n'));
     dispatch(clearUserError());
   }, [dispatch, error]);
+
+  useEffect(() => {
+    if (!churchError && !inviteError) return;
+
+    if (churchError) toast.error(churchError);
+    if (inviteError) toast.error(inviteError);
+    dispatch(clearChurchError());
+  }, [dispatch, churchError, inviteError]);
 
   useEffect(() => {
     if (mode === 'night') {

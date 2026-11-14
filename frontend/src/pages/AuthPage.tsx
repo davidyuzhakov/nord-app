@@ -16,7 +16,7 @@ import {
   UserRoundIcon,
 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { Navigate, NavLink } from 'react-router-dom';
+import { Navigate, NavLink, useLocation } from 'react-router-dom';
 
 export default function AuthPage({
   variant,
@@ -28,6 +28,8 @@ export default function AuthPage({
     (state) => state.user,
   );
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? '/';
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isRegister = variant === 'register';
   const isBusy = loading || !initialized;
@@ -56,7 +58,7 @@ export default function AuthPage({
     }
   };
 
-  if (current) return <Navigate to="/" replace />;
+  if (current) return <Navigate to={redirectTo} replace />;
 
   return (
     <main className="relative isolate min-h-dvh">
@@ -119,6 +121,7 @@ export default function AuthPage({
               >
                 <NavLink
                   to={to}
+                  state={{ from: redirectTo }}
                   aria-disabled={isBusy}
                   tabIndex={isBusy ? -1 : undefined}
                   onClick={(event) => {
