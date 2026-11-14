@@ -1,44 +1,58 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthRequestGuard } from '@/auth/auth-request.guard';
+import { SessionGuard } from '@/auth/session.guard';
+import type { AuthenticatedRequest } from '@/auth/auth.types';
+import { ActiveChurchGuard } from '@/church/active-church.guard';
+import type { ActiveChurchRequest } from '@/church/church.types';
 import { SongService } from './song.service';
-import { CreateSongDto } from './dto/create-song.dto';
-import { UpdateSongDto } from './dto/update-song.dto';
 import { GetSongsDto } from './dto/get-songs.dto';
+import { UpdateSongDto } from './dto/update-song.dto';
 
 @Controller('song')
+@UseGuards(AuthRequestGuard, SessionGuard)
 export class SongController {
   constructor(private readonly songService: SongService) {}
 
-  @Post()
-  createSong(@Body() createSongDto: CreateSongDto) {
-    return this.songService.create(createSongDto);
-  }
-
   @Get()
-  getAllSongs(@Query() dto: GetSongsDto) {
-    return this.songService.findAll(dto);
+  @UseGuards(ActiveChurchGuard)
+  getAllSongs(@Req() request: ActiveChurchRequest, @Query() dto: GetSongsDto) {
+    return this.songService.findAll(request.churchId, dto);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.songService.findOne(+id);
+  @UseGuards(ActiveChurchGuard)
+  findOne(
+    @Req() request: ActiveChurchRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.songService.findOne(request.churchId, id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSongDto: UpdateSongDto) {
-    return this.songService.update(+id, updateSongDto);
+  update(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSongDto,
+  ) {
+    return this.songService.update(id, dto, request.auth.session.user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.songService.remove(+id);
+  remove(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.songService.remove(id, request.auth.session.user);
   }
 }

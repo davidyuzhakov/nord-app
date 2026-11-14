@@ -43,6 +43,8 @@ model Church {
   updatedAt   DateTime       @updatedAt
   members     ChurchMember[]
   activeUsers User[]         @relation("current")
+  songs       ChurchSong[]
+  programs    Program[]
 }
 
 model ChurchMember {
@@ -57,7 +59,26 @@ model ChurchMember {
 }
 
 model Song {
+  id          Int          @id @default(autoincrement())
+  name        String
+  key         String
+  bpm         Int
+  text        String
+  audio       String?
+  danceVideo  String?
+  structure   Json?
+  churchSongs ChurchSong[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChurchSong {
   id           Int           @id @default(autoincrement())
+  churchId     String        @db.Uuid
+  church       Church        @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  sourceSongId Int?
+  sourceSong   Song?         @relation(fields: [sourceSongId], references: [id], onDelete: SetNull)
   name         String
   key          String
   bpm          Int
@@ -66,17 +87,19 @@ model Song {
   danceVideo   String?
   structure    Json?
   programSongs ProgramSong[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@unique([churchId, sourceSongId])
+  @@index([sourceSongId])
 }
 
 model ProgramSong {
-  id        Int     @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   programId Int
-  program   Program @relation(fields: [programId], references: [id])
+  program   Program    @relation(fields: [programId], references: [id], onDelete: Cascade)
   songId    Int
-  song      Song    @relation(fields: [songId], references: [id], onDelete: Cascade)
+  song      ChurchSong @relation(fields: [songId], references: [id], onDelete: Cascade)
   order     Int
   key       String?
 
@@ -86,6 +109,8 @@ model ProgramSong {
 
 model Program {
   id         Int           @id @default(autoincrement())
+  churchId   String        @db.Uuid
+  church     Church        @relation(fields: [churchId], references: [id], onDelete: Cascade)
   name       String
   songs      ProgramSong[]
   date       DateTime?
@@ -93,4 +118,6 @@ model Program {
   isArchived Boolean       @default(false)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
+
+  @@index([churchId, createdAt])
 }

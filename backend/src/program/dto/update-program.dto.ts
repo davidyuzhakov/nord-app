@@ -1,10 +1,11 @@
 import {
   IsString,
-  IsOptional,
+  ArrayUnique,
   IsArray,
   IsInt,
   IsBoolean,
   IsDateString,
+  IsOptional,
 } from 'class-validator';
 
 export class UpdateProgramDto {
@@ -12,20 +13,21 @@ export class UpdateProgramDto {
   @IsDateString()
   date?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   name?: string;
 
-  @IsArray()
-  @IsInt({ each: true })
   @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsInt({ each: true })
   songsId?: number[];
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isFavorite?: boolean;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isArchived?: boolean;
 }

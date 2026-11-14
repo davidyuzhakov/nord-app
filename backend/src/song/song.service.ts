@@ -1,105 +1,122 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CreateSongDto } from './dto/create-song.dto';
-import { UpdateSongDto } from './dto/update-song.dto';
-import { GetSongsDto } from './dto/get-songs.dto';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import type { AuthUser } from '@/auth/auth.types';
+import { Prisma } from '@/generated/prisma/client';
+import type { Song } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
+import { GetSongsDto } from './dto/get-songs.dto';
+import { UpdateSongDto } from './dto/update-song.dto';
 
 @Injectable()
 export class SongService {
   private readonly logger = new Logger(SongService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateSongDto) {
-    const song = await this.prisma.song.create({
-      data: {
-        name: dto.name,
-        key: dto.key,
-        bpm: dto.bpm,
-        text: dto.text,
-        audio: dto.audio,
-        danceVideo: dto.danceVideo,
-        structure: dto.structure,
-      },
-    });
-
-    this.logger.log(`Песня создана: name=${song.name} id=${song.id}`);
-    return song;
-  }
-
-  async findAll(dto: GetSongsDto) {
-    const { search } = dto;
+  async findAll(churchId: string, { search }: GetSongsDto) {
+    const include = this.catalogInclude(churchId);
     if (!search) {
-      return this.prisma.song.findMany({
+      const songs = await this.prisma.song.findMany({
         orderBy: { name: 'asc' },
+        include,
       });
+      return songs.map((song) => this.withChurchSongId(song));
     }
 
-    const songsByName = await this.prisma.song.findMany({
-      where: {
-        name: {
-          contains: search,
-          mode: 'insensitive',
-        },
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
+    const nameFilter = { contains: search, mode: 'insensitive' as const };
+    const [songsByName, songsByText] = await Promise.all([
+      this.prisma.song.findMany({
+        where: { name: nameFilter },
+        orderBy: { name: 'asc' },
+        include,
+      }),
+      this.prisma.song.findMany({
+        where: { text: nameFilter, NOT: { name: nameFilter } },
+        orderBy: { name: 'asc' },
+        include,
+      }),
+    ]);
 
-    const songsByText = await this.prisma.song.findMany({
-      where: {
-        text: {
-          contains: search,
-          mode: 'insensitive',
-        },
-        NOT: {
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
-    return [...songsByName, ...songsByText];
+    return [...songsByName, ...songsByText].map((song) =>
+      this.withChurchSongId(song),
+    );
   }
 
-  findOne(id: number) {
-    return this.ensureExists(id);
-  }
-
-  async update(id: number, updateSongDto: UpdateSongDto) {
-    await this.ensureExists(id);
-
-    const song = await this.prisma.song.update({
+  async findOne(churchId: string, id: number) {
+    const song = await this.prisma.song.findUnique({
       where: { id },
-      data: updateSongDto,
+      include: this.catalogInclude(churchId),
     });
+    if (!song) throw new NotFoundException('Песня не найдена');
+    return this.withChurchSongId(song);
+  }
 
-    this.logger.log(`Песня изменена: name=${song.name} id=${song.id}`);
+  async update(id: number, dto: UpdateSongDto, user: AuthUser) {
+    this.ensureOwner(user);
+    const song = await this.prisma.song
+      .update({
+        where: { id },
+        data: {
+          ...dto,
+          structure:
+            dto.structure === null
+              ? Prisma.DbNull
+              : dto.structure?.map((item) => ({ ...item })),
+        },
+      })
+      .catch((error: unknown) => this.handleError(error));
+    this.logger.log({
+      message: 'Песня общего каталога изменена',
+      songId: song.id,
+      user: { id: user.id, name: user.fullName },
+    });
     return song;
   }
 
-  async remove(id: number) {
-    await this.ensureExists(id);
-
-    const song = await this.prisma.song.delete({ where: { id } });
-
-    this.logger.log(`Песня удалена: name=${song.name} id=${song.id}`);
+  async remove(id: number, user: AuthUser) {
+    this.ensureOwner(user);
+    const song = await this.prisma.song
+      .delete({ where: { id } })
+      .catch((error: unknown) => this.handleError(error));
+    this.logger.log({
+      message: 'Песня общего каталога удалена',
+      songId: song.id,
+      user: { id: user.id, name: user.fullName },
+    });
     return song;
   }
 
-  private async ensureExists(id: number) {
-    const exists = await this.prisma.song.findUnique({ where: { id } });
-
-    if (!exists) {
+  private handleError(error: unknown): never {
+    if (
+      error instanceof PrismaClientKnownRequestError &&
+      error.code === 'P2025'
+    ) {
       throw new NotFoundException('Песня не найдена');
     }
+    throw error;
+  }
 
-    return exists;
+  private ensureOwner(user: AuthUser) {
+    if (user.email !== 'davidyuzhakov17@gmail.com') {
+      throw new ForbiddenException('Нет доступа');
+    }
+  }
+
+  private catalogInclude(churchId: string) {
+    return {
+      churchSongs: { where: { churchId }, select: { id: true } },
+    };
+  }
+
+  private withChurchSongId({
+    churchSongs,
+    ...song
+  }: Song & { churchSongs: { id: number }[] }) {
+    return { ...song, churchSongId: churchSongs[0]?.id ?? null };
   }
 }

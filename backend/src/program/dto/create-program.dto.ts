@@ -1,5 +1,6 @@
 import {
   ArrayNotEmpty,
+  ArrayUnique,
   IsArray,
   IsDateString,
   IsInt,
@@ -17,6 +18,7 @@ export class CreateProgramDto {
 
   @IsArray()
   @ArrayNotEmpty()
+  @ArrayUnique()
   @IsInt({ each: true })
   songsId!: number[];
 }

@@ -89,5 +89,5 @@ export class CreateSongDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SongStructureItem)
-  structure?: string[];
+  structure?: SongStructureItem[];
 }
