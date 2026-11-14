@@ -9,7 +9,7 @@ export function SectionLayout({ title }: { title: string }) {
   const goBack = useGoBack();
 
   return (
-    <div className="px-3 max-w-md mx-auto">
+    <div className="px-3 max-w-[500px] mx-auto">
       <div className="flex items-center gap-3 pt-3">
         <button
           onClick={() => goBack()}

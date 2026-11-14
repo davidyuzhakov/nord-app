@@ -10,6 +10,7 @@ import { Button } from './components/ui/button';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { OnboardingLayout } from './layout/OnboardingLayout';
 
 const MutationProgramPage = lazy(() => import('./pages/MutationProgramPage'));
 const MutationSongPage = lazy(() => import('./pages/MutationSongPage'));
@@ -18,6 +19,8 @@ const LiveModePage = lazy(() => import('./pages/LiveModePage'));
 const SongsPage = lazy(() => import('./pages/SongsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AuthPage = lazy(() => import('./pages/AuthPage'));
+const WelcomePage = lazy(() => import('./pages/WelcomePage'));
+const ConnectPage = lazy(() => import('./pages/ConnectPage'));
 
 function App() {
   const mode = useAppSelector((state) => state.settings.mode);
@@ -55,6 +58,10 @@ function App() {
               <Route path="songs" element={<SongsPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="song/:id" element={<SongDetailPage />} />
+            </Route>
+            <Route element={<OnboardingLayout />}>
+              <Route path="welcome" element={<WelcomePage />} />
+              <Route path="connect/:inviteToken" element={<ConnectPage />} />
             </Route>
             <Route element={<SectionLayout title="Новая программа" />}>
               <Route path="program/create" element={<MutationProgramPage />} />
