@@ -9,6 +9,7 @@ import type { AuthUser } from '@/auth/auth.types';
 import { Prisma } from '@/generated/prisma/client';
 import type { Song } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
+import { CreateSongDto } from './dto/create-song.dto';
 import { GetSongsDto } from './dto/get-songs.dto';
 import { UpdateSongDto } from './dto/update-song.dto';
 
@@ -17,6 +18,19 @@ export class SongService {
   private readonly logger = new Logger(SongService.name);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  async create(dto: CreateSongDto, user: AuthUser) {
+    this.ensureOwner(user);
+    const song = await this.prisma.song.create({
+      data: { ...dto, structure: dto.structure ?? Prisma.DbNull },
+    });
+    this.logger.log({
+      message: 'Песня общего каталога создана',
+      songId: song.id,
+      user: { id: user.id, name: user.fullName },
+    });
+    return song;
+  }
 
   async findAll(churchId: string, { search }: GetSongsDto) {
     const include = this.catalogInclude(churchId);
@@ -63,10 +77,7 @@ export class SongService {
         where: { id },
         data: {
           ...dto,
-          structure:
-            dto.structure === null
-              ? Prisma.DbNull
-              : dto.structure?.map((item) => ({ ...item })),
+          structure: dto.structure === null ? Prisma.DbNull : dto.structure,
         },
       })
       .catch((error: unknown) => this.handleError(error));

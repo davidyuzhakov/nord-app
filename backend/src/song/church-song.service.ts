@@ -54,10 +54,7 @@ export class ChurchSongService {
         data: {
           churchId,
           ...dto,
-          structure:
-            dto.structure === null
-              ? Prisma.DbNull
-              : dto.structure?.map((item) => ({ ...item })),
+          structure: dto.structure ?? Prisma.DbNull,
         },
       })
       .catch((error: unknown) => this.handleError(error));
@@ -122,10 +119,7 @@ export class ChurchSongService {
         where: { id, churchId },
         data: {
           ...dto,
-          structure:
-            dto.structure === null
-              ? Prisma.DbNull
-              : dto.structure?.map((item) => ({ ...item })),
+          structure: dto.structure === null ? Prisma.DbNull : dto.structure,
         },
       })
       .catch((error: unknown) => this.handleError(error));

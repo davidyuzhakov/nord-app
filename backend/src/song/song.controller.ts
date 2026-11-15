@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Post,
   Query,
   Req,
   UseGuards,
@@ -16,6 +17,7 @@ import type { AuthenticatedRequest } from '@/auth/auth.types';
 import { ActiveChurchGuard } from '@/church/active-church.guard';
 import type { ActiveChurchRequest } from '@/church/church.types';
 import { SongService } from './song.service';
+import { CreateSongDto } from './dto/create-song.dto';
 import { GetSongsDto } from './dto/get-songs.dto';
 import { UpdateSongDto } from './dto/update-song.dto';
 
@@ -23,6 +25,11 @@ import { UpdateSongDto } from './dto/update-song.dto';
 @UseGuards(AuthRequestGuard, SessionGuard)
 export class SongController {
   constructor(private readonly songService: SongService) {}
+
+  @Post()
+  create(@Req() request: AuthenticatedRequest, @Body() dto: CreateSongDto) {
+    return this.songService.create(dto, request.auth.session.user);
+  }
 
   @Get()
   @UseGuards(ActiveChurchGuard)

@@ -4,6 +4,10 @@ generator client {
   moduleFormat = "cjs"
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -66,6 +70,7 @@ model Song {
   text        String
   audio       String?
   danceVideo  String?
+  /// [SongStructure]
   structure   Json?
   churchSongs ChurchSong[]
 
@@ -85,6 +90,7 @@ model ChurchSong {
   text         String
   audio        String?
   danceVideo   String?
+  /// [SongStructure]
   structure    Json?
   programSongs ProgramSong[]
   createdAt    DateTime      @default(now())
