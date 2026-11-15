@@ -4,10 +4,23 @@ export interface Song {
   key: KeyType;
   bpm: number;
   text: string;
-  structure?: SongStructureItem[];
-  danceVideo?: string;
-  audio?: string;
+  structure?: SongStructureItem[] | null;
+  danceVideo?: string | null;
+  audio?: string | null;
 }
+
+export type SongCatalog = 'general' | 'church';
+
+export interface CatalogSong extends Song {
+  churchSongId: number | null;
+}
+
+export interface ChurchSong extends Song {
+  churchId: string;
+  sourceSongId: number | null;
+}
+
+export type LibrarySong = CatalogSong | ChurchSong;
 
 export type SongStructureItem = {
   id: string;

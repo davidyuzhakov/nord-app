@@ -1,9 +1,9 @@
-import type { KeyType, Song } from './Song';
+import type { ChurchSong, KeyType } from './Song';
 
 export interface ProgramSong {
   id: number;
   order: number;
-  song: Song;
+  song: ChurchSong;
   songId: number;
   programId: number;
   key: KeyType | null;

@@ -4,7 +4,7 @@ import { useRef } from 'react';
 
 interface HeaderProps {
   children: React.ReactNode;
-  structure: SongStructureItem[] | undefined;
+  structure: SongStructureItem[] | null | undefined;
   songId: number;
 }
 

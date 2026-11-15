@@ -21,7 +21,7 @@ const navLink: INavLink[] = [
     icon: <RadioIcon size={23} className="stroke-inherit" />,
   },
   {
-    title: 'Хвалы',
+    title: 'Библиотека',
     to: '/songs',
     icon: <Music4Icon size={23} className="stroke-inherit" />,
   },
@@ -55,7 +55,7 @@ export function BottomBar() {
         mx-auto
         test
         fixed bottom-3 left-2.5 right-2.5 z-1
-        flex gap-2 justify-around items-center
+        flex gap-0.5 justify-around items-center
         rounded-4xl p-0.5
         bg-secondary/60 backdrop-blur-xs
         border-2 border-background/40

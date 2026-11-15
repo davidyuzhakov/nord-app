@@ -34,6 +34,7 @@ import { ru } from 'date-fns/locale';
 import { CalendarIcon, InfoIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function MutationProgramPage() {
   const { id } = useParams();
@@ -42,15 +43,18 @@ export default function MutationProgramPage() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [date, setDate] = useState<Date | undefined>();
   const [name, setName] = useState('');
+  const [loadedId, setLoadedId] = useState<number | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const churchId = useAppSelector(
+    (state) => state.user.current?.activeChurchId,
+  );
   const placeholder =
     date?.toLocaleDateString('ru-RU', {
       weekday: 'long',
       day: '2-digit',
       month: '2-digit',
     }) ?? '';
-  const { loading, addedSong, current } = useAppSelector(
-    (state) => state.program,
-  );
+  const { loading, addedSong } = useAppSelector((state) => state.program);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -83,18 +87,19 @@ export default function MutationProgramPage() {
 
   const submitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!date) {
-      alert('Выберите дату');
+      toast.error('Выберите дату');
       return;
     }
     if (songs.length === 0) {
-      alert('Добавьте хотя бы 1 хвалу');
+      toast.error('Добавьте хотя бы одну хвалу');
       return;
     }
 
     const nameProgram =
-      name.length > 0
-        ? name
+      name.trim().length > 0
+        ? name.trim()
         : date.toLocaleDateString('ru-RU', {
             weekday: 'long',
             day: '2-digit',
@@ -114,9 +119,8 @@ export default function MutationProgramPage() {
           }),
         ).unwrap();
         navigate('/');
-      } catch (error) {
-        console.log(error);
-        alert('Не удалось обновить программу');
+      } catch {
+        return;
       }
     } else {
       try {
@@ -128,9 +132,8 @@ export default function MutationProgramPage() {
           }),
         ).unwrap();
         navigate('/');
-      } catch (error) {
-        console.log(error);
-        alert('Не удалось создать программу');
+      } catch {
+        return;
       }
     }
   };
@@ -143,38 +146,54 @@ export default function MutationProgramPage() {
 
   const onToggleSong = (isChecked: boolean, checkedSong: Song) => {
     if (isChecked) {
-      setSongs((prev) => [...prev, checkedSong]);
+      setSongs((prev) =>
+        prev.some((song) => song.id === checkedSong.id)
+          ? prev
+          : [...prev, checkedSong],
+      );
     } else {
       setSongs((prev) => prev.filter((s) => s.id !== checkedSong.id));
     }
   };
 
   useEffect(() => {
-    if (!addedSong) return;
+    if (!addedSong || isEdit) return;
     setSongs([addedSong]);
     dispatch(destroyAddedSong());
-  }, [addedSong, dispatch]);
+  }, [addedSong, dispatch, isEdit]);
 
   useEffect(() => {
     if (!isEdit) return;
-
+    let active = true;
+    setLoadedId(null);
+    setLoadFailed(false);
+    const request = dispatch(fetchProgram(Number(id)));
     const load = async () => {
-      const program = await dispatch(fetchProgram(Number(id))).unwrap();
+      const result = await request;
+      if (!active) return;
+      if (!fetchProgram.fulfilled.match(result)) {
+        setLoadFailed(true);
+        return;
+      }
+      const program = result.payload;
       setName(program.name);
       setSongs(
         program.songs.map((s) => ({ ...s.song, key: s.key ?? s.song.key })),
       );
-      if (program.date) {
-        setDate(new Date(program.date));
-      }
+      setDate(program.date ? new Date(program.date) : undefined);
+      setLoadedId(program.id);
     };
 
     load();
-  }, [id, dispatch, isEdit]);
+    return () => {
+      active = false;
+      request.abort();
+    };
+  }, [id, dispatch, isEdit, churchId]);
 
-  if (isEdit && !current && loading) return <Loading />;
+  if (isEdit && loadedId !== Number(id) && !loadFailed) return <Loading />;
 
-  if (isEdit && !loading && !current) {
+  if (isEdit && loadFailed) {
     return (
       <p className="text-center text-muted-foreground text-lg py-2">
         Программа не найдена
@@ -207,6 +226,7 @@ export default function MutationProgramPage() {
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                type="button"
                 variant="outline"
                 id="date-picker-range"
                 className="justify-start font-normal h-12 rounded-md text-sm bg-muted dark:bg-input/30 border-none shadow-none"

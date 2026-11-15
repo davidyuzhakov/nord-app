@@ -1,4 +1,4 @@
-import type { KeyType, Song as SongModel } from '@/models/Song';
+import type { KeyType, Song as SongModel, SongCatalog } from '@/models/Song';
 import type { ProgramSong } from '@/models/Program';
 import { parseSongSections, type SongSection } from '@/utils/parseSongSections';
 import { tokenizeSection } from '@/utils/tokenize';
@@ -15,20 +15,25 @@ import { updateProgramSongThunk } from '@/store/reducers/programSlice';
 import { CopyCheck, GaugeIcon, Music2Icon, TypeIcon } from 'lucide-react';
 import { updateHideChords } from '@/store/reducers/settingsSlice';
 import { getTextBg } from '@/utils/getStructureBg';
+import { toast } from 'sonner';
 
 export function Song({
   song,
   isEdit,
   programSong,
+  catalog = 'church',
 }: {
   song: SongModel;
   isEdit?: boolean;
   programSong?: ProgramSong;
+  catalog?: SongCatalog;
 }) {
   const savedKey = programSong?.key ?? song.key;
   const [currentKey, setCurrentKey] = useState<KeyType>(savedKey);
   const [isCopied, setIsCopied] = useState(false);
   const dispatch = useAppDispatch();
+  const mutating = useAppSelector((state) => state.song.mutating);
+  const programLoading = useAppSelector((state) => state.program.loading);
   const { hideChords, songFontSize } = useAppSelector(
     (state) => state.settings,
   );
@@ -49,6 +54,7 @@ export function Song({
   }, [song.text, song.key, currentKey]);
 
   const changeKey = () => {
+    if (!isEdit || mutating || programLoading) return;
     if (programSong) {
       dispatch(
         updateProgramSongThunk({
@@ -63,6 +69,7 @@ export function Song({
     const newText = stringifySongSections(sections);
     dispatch(
       updateSongThunk({
+        catalog,
         id: song.id,
         data: {
           key: currentKey,
@@ -116,8 +123,12 @@ export function Song({
       finalText = textArr.join('\n\n');
     }
 
-    await navigator.clipboard.writeText(`${song.name}\n\n${finalText}`);
-    setIsCopied(true);
+    try {
+      await navigator.clipboard.writeText(`${song.name}\n\n${finalText}`);
+      setIsCopied(true);
+    } catch {
+      toast.error('Не удалось скопировать текст хвалы');
+    }
   }
 
   useEffect(() => {
@@ -148,7 +159,12 @@ export function Song({
               <Tonality currentKey={currentKey} setCurrentKey={setCurrentKey} />
             </div>
             {currentKey !== savedKey && (
-              <Button className="order-1" onClick={changeKey} type="button">
+              <Button
+                className="order-1"
+                onClick={changeKey}
+                type="button"
+                disabled={mutating || programLoading}
+              >
                 Сохранить
               </Button>
             )}

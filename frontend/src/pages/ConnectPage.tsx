@@ -42,10 +42,7 @@ export default function ConnectPage() {
 
   return (
     <main className="flex flex-1 flex-col gap-8 pt-10 pb-3">
-      <section
-        aria-label="Подключение к церкви"
-        className="flex w-full flex-1 flex-col items-center justify-center text-center"
-      >
+      <section className="flex w-full flex-1 flex-col items-center justify-center text-center">
         <Button
           type="button"
           variant="ghost"
@@ -53,16 +50,15 @@ export default function ConnectPage() {
           disabled={loading}
           onClick={() => navigate('/welcome')}
         >
-          <ArrowLeftIcon aria-hidden="true" />
+          <ArrowLeftIcon />
           Назад
         </Button>
         {isLoadingInvite ? (
           <p
             id="connect-church-title"
-            role="status"
             className="flex items-center gap-2 text-white/70"
           >
-            <Spinner aria-hidden="true" />
+            <Spinner />
             Загрузка приглашения
           </p>
         ) : isCurrentInvite && invite ? (
@@ -77,16 +73,11 @@ export default function ConnectPage() {
             <Button
               type="button"
               disabled={loading}
-              aria-busy={loading}
               onClick={handleJoin}
               className="mt-7 h-12 w-full rounded-xl bg-white text-base font-semibold text-slate-950 sm:mt-10"
             >
               Подключиться
-              {loading ? (
-                <Spinner aria-label="Подключение к церкви" />
-              ) : (
-                <ArrowRightIcon aria-hidden="true" className="size-5" />
-              )}
+              {loading ? <Spinner /> : <ArrowRightIcon className="size-5" />}
             </Button>
           </>
         ) : (

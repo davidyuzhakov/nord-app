@@ -23,10 +23,7 @@ export function OnboardingLayout() {
 
   return (
     <div className="relative isolate mx-auto flex min-h-dvh w-full max-w-[500px] flex-col p-3 text-white">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10"
-      >
+      <div className="pointer-events-none fixed inset-0 -z-10">
         <img
           src="/bg-welcome.webp"
           alt=""
@@ -41,17 +38,11 @@ export function OnboardingLayout() {
           variant="ghost"
           size="icon"
           className="rounded-full text-white/70 hover:bg-white/10 hover:text-white"
-          aria-label="Выйти из аккаунта"
           title="Выйти из аккаунта"
           disabled={isBusy}
-          aria-busy={userLoading}
           onClick={handleLogout}
         >
-          {userLoading ? (
-            <Spinner aria-label="Выход из аккаунта" />
-          ) : (
-            <LogOutIcon aria-hidden="true" />
-          )}
+          {userLoading ? <Spinner /> : <LogOutIcon />}
         </Button>
       </header>
       <Suspense fallback={<Loading />}>

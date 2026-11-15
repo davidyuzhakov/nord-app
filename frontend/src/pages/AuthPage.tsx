@@ -62,10 +62,7 @@ export default function AuthPage({
 
   return (
     <main className="relative isolate min-h-dvh">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 bg-slate-950"
-      >
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-slate-950">
         <img
           src="/bg-auth.jpg"
           alt=""
@@ -84,23 +81,15 @@ export default function AuthPage({
             onClick={() =>
               dispatch(updateMode(mode === 'day' ? 'night' : 'day'))
             }
-            aria-label={mode === 'day' ? 'Светлая тема' : 'Темная тема'}
           >
-            {mode === 'day' ? (
-              <MoonStarIcon aria-hidden="true" />
-            ) : (
-              <SunIcon aria-hidden="true" />
-            )}
+            {mode === 'day' ? <MoonStarIcon /> : <SunIcon />}
           </Button>
         </div>
 
         <section className="mx-auto my-auto w-full max-w-[440px] rounded-3xl border border-border/70 bg-background/80 p-6 backdrop-blur-sm sm:p-8">
           <Logo className="justify-center mb-7" size="lg" />
 
-          <nav
-            aria-label="Вход или регистрация"
-            className="mb-7 grid grid-cols-2 gap-1 border bg-muted/50 p-1 rounded-full"
-          >
+          <nav className="mb-7 grid grid-cols-2 gap-1 border bg-muted/50 p-1 rounded-full">
             {[
               { to: '/login', label: 'Вход', active: !isRegister },
               {
@@ -122,7 +111,6 @@ export default function AuthPage({
                 <NavLink
                   to={to}
                   state={{ from: redirectTo }}
-                  aria-disabled={isBusy}
                   tabIndex={isBusy ? -1 : undefined}
                   onClick={(event) => {
                     if (isBusy) event.preventDefault();
@@ -134,12 +122,7 @@ export default function AuthPage({
             ))}
           </nav>
 
-          <form
-            aria-label={isRegister ? 'Регистрация' : 'Вход'}
-            aria-busy={isBusy}
-            className="space-y-6"
-            onSubmit={handleSubmit}
-          >
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {isRegister && (
               <AuthField
                 id="auth-name"
@@ -191,17 +174,13 @@ export default function AuthPage({
                 variant="ghost"
                 size="icon"
                 className="absolute top-1/2 right-1 size-11 -translate-y-1/2 rounded-lg text-muted-foreground"
-                aria-label={
-                  isPasswordVisible ? 'Скрыть пароль' : 'Показать пароль'
-                }
-                aria-controls="auth-password"
                 disabled={isBusy}
                 onClick={() => setIsPasswordVisible((visible) => !visible)}
               >
                 {isPasswordVisible ? (
-                  <EyeOffIcon aria-hidden="true" className="size-5" />
+                  <EyeOffIcon className="size-5" />
                 ) : (
-                  <EyeIcon aria-hidden="true" className="size-5" />
+                  <EyeIcon className="size-5" />
                 )}
               </Button>
             </AuthField>
@@ -211,13 +190,7 @@ export default function AuthPage({
               disabled={isBusy}
               className="h-13 w-full rounded-xl font-semibold text-white shadow-lg shadow-primary/15 hover:bg-primary/90 active:scale-[0.98]"
             >
-              {isBusy ? (
-                <Spinner aria-label="Загрузка" />
-              ) : isRegister ? (
-                'Создать аккаунт'
-              ) : (
-                'Войти'
-              )}
+              {isBusy ? <Spinner /> : isRegister ? 'Создать аккаунт' : 'Войти'}
             </Button>
           </form>
         </section>

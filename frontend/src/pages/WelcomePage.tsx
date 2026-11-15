@@ -32,10 +32,7 @@ export default function WelcomePage() {
   return (
     <main className="flex flex-1 flex-col gap-8 pt-10 pb-3">
       {isCreating ? (
-        <section
-          aria-label="Создание церкви"
-          className="flex w-full flex-1 flex-col justify-center"
-        >
+        <section className="flex w-full flex-1 flex-col justify-center">
           <Button
             type="button"
             variant="ghost"
@@ -43,15 +40,10 @@ export default function WelcomePage() {
             disabled={loading}
             onClick={() => setIsCreating(false)}
           >
-            <ArrowLeftIcon aria-hidden="true" />
+            <ArrowLeftIcon />
             Назад
           </Button>
-          <form
-            aria-label="Создать церковь"
-            aria-busy={loading}
-            className="space-y-6"
-            onSubmit={handleSubmit}
-          >
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-3">
               <Label
                 htmlFor="church-name"
@@ -80,7 +72,7 @@ export default function WelcomePage() {
               disabled={loading || !churchName.trim()}
               className="h-12 w-full rounded-xl bg-white text-base font-semibold text-slate-950"
             >
-              {loading && <Spinner aria-label="Создание церкви" />}
+              {loading && <Spinner />}
               Подтвердить
             </Button>
           </form>
@@ -98,7 +90,7 @@ export default function WelcomePage() {
             onClick={() => setIsCreating(true)}
           >
             Создать церковь
-            <ArrowRightIcon aria-hidden="true" className="size-5" />
+            <ArrowRightIcon className="size-5" />
           </Button>
           <p className="mt-5 text-sm leading-relaxed text-white/70">
             Присоединиться к церкви можно по пригласительной ссылке
@@ -109,11 +101,11 @@ export default function WelcomePage() {
         <Button
           type="button"
           variant="ghost"
-          className="h-10 self-center rounded-xl px-4 text-sm text-white bg-accent/50"
+          className="h-10 self-center rounded-xl px-4 text-sm text-white bg-black/50 hover:bg-black/40 dark:hover:bg-black/40 hover:text-white"
           disabled={loading}
           onClick={() => navigate('/')}
         >
-          <HouseIcon aria-hidden="true" />
+          <HouseIcon />
           На главную
         </Button>
       )}

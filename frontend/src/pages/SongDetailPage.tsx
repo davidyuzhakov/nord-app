@@ -3,49 +3,34 @@ import { Loading } from '@/components/Loading';
 import { Song } from '@/components/Song';
 import { Button } from '@/components/ui/button';
 import { useGoBack } from '@/hooks/useGoBack';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { clearCurrent, fetchSong } from '@/store/reducers/songSlice';
-import { fetchProgram } from '@/store/reducers/programSlice';
+import { useSongDetail } from '@/hooks/useSongDetail';
+import { useAppSelector } from '@/store/hooks';
 import {
   ChevronLeft,
   Headphones,
   PencilIcon,
   PersonStanding,
-  Share2,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { canManageCatalog, getSongCatalog } from '@/utils/songCatalog';
 
 export default function SongDetailPage() {
   const { id } = useParams();
+  const songId = Number(id);
   const [params] = useSearchParams();
+  const catalog = getSongCatalog(params);
+  const user = useAppSelector((state) => state.user.current);
+  const canEdit = catalog === 'church' || canManageCatalog(user);
   const programId = params.has('programId')
     ? Number(params.get('programId'))
     : undefined;
   const navigate = useNavigate();
   const goBack = useGoBack();
   const [isCopied, setIsCopied] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const sharingRef = useRef(false);
-  const { current, loading } = useAppSelector((state) => state.song);
-  const { current: program, loading: programLoading } = useAppSelector(
-    (state) => state.program,
-  );
-  const programSong =
-    program?.id === programId
-      ? program?.songs.find((song) => song.songId === Number(id))
-      : undefined;
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    if (id) {
-      dispatch(fetchSong(Number(id)));
-    }
-  }, [id, dispatch]);
-
-  useEffect(() => {
-    if (programId !== undefined) dispatch(fetchProgram(programId));
-  }, [programId, dispatch]);
+  // const [isSharing, setIsSharing] = useState(false);
+  // const sharingRef = useRef(false);
+  const detail = useSongDetail(songId, catalog, programId);
 
   useEffect(() => {
     if (!isCopied) return;
@@ -55,51 +40,51 @@ export default function SongDetailPage() {
     return () => clearTimeout(timeoutId);
   }, [isCopied]);
 
-  if ((loading && !current) || (programId !== undefined && programLoading))
-    return <Loading />;
-  if (
-    !current ||
-    current.id !== Number(id) ||
-    (programId !== undefined && !programSong)
-  )
+  if (detail.status === 'loading') return <Loading />;
+  if (detail.status === 'unavailable') {
     return (
-      <p className="text-center text-muted-foreground text-lg py-2">
-        Песня не найдена
-      </p>
+      <div className="mx-auto pt-10 text-center">
+        <h5 className="font-medium text-xl -mb-6">Хвала не найдена</h5>
+        <img
+          src="/song-not-found.png"
+          alt="песня не найдена"
+          className="max-w-[300px] mx-auto"
+        />
+      </div>
     );
+  }
 
-  const shareSong = async () => {
-    if (sharingRef.current) return;
+  const { song: current, programSong, isArchived } = detail;
 
-    sharingRef.current = true;
-    setIsSharing(true);
-    const url = window.location.href;
+  // const shareSong = async () => {
+  //   if (sharingRef.current) return;
 
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: current.name, url });
-      } else {
-        await navigator.clipboard.writeText(`${current.name}\n${url}`);
-        setIsCopied(true);
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      alert('Не удалось поделиться песней. Попробуйте ещё раз');
-    } finally {
-      sharingRef.current = false;
-      setIsSharing(false);
-    }
-  };
+  //   sharingRef.current = true;
+  //   setIsSharing(true);
+  //   const url = window.location.href;
+
+  //   try {
+  //     if (navigator.share) {
+  //       await navigator.share({ title: current.name, url });
+  //     } else {
+  //       await navigator.clipboard.writeText(`${current.name}\n${url}`);
+  //       setIsCopied(true);
+  //     }
+  //   } catch (error) {
+  //     if (error instanceof DOMException && error.name === 'AbortError') return;
+  //     toast.error('Не удалось поделиться песней. Попробуйте ещё раз');
+  //   } finally {
+  //     sharingRef.current = false;
+  //     setIsSharing(false);
+  //   }
+  // };
 
   return (
     <div className="-mx-3 space-y-3 pb-16">
       <Header structure={current.structure} songId={current.id}>
         <div className="flex items-center gap-1 truncate">
           <button
-            onClick={() => {
-              goBack();
-              dispatch(clearCurrent());
-            }}
+            onClick={goBack}
             className="shrink-0 p-0 flex items-center justify-center rounded-full size-10 bg-secondary/20 backdrop-blur-xs drop-shadow-xs border"
             type="button"
           >
@@ -107,21 +92,24 @@ export default function SongDetailPage() {
           </button>
           <h2 className="text-[22px] font-semibold truncate">{current.name}</h2>
         </div>
-        <button
-          onClick={() =>
-            navigate(
-              `/song/${current.id}/edit${programId !== undefined ? `?programId=${programId}` : ''}`,
-            )
-          }
-          type="button"
-          className="p-2 rounded-md bg-secondary/20 backdrop-blur-xs drop-shadow-xs border"
-        >
-          <PencilIcon size={20} className="" />
-        </button>
+        {canEdit && (
+          <button
+            onClick={() =>
+              navigate(
+                `/song/${current.id}/edit?catalog=${catalog}${programId !== undefined ? `&programId=${programId}` : ''}`,
+              )
+            }
+            type="button"
+            className="p-2 rounded-md bg-secondary/20 backdrop-blur-xs drop-shadow-xs border"
+          >
+            <PencilIcon size={20} className="" />
+          </button>
+        )}
       </Header>
       <Song
-        key={`${current.id}-${programId ?? 'global'}`}
-        isEdit={!program?.isArchived}
+        key={`${catalog}-${current.id}-${programId ?? 'catalog'}`}
+        isEdit={canEdit && !isArchived}
+        catalog={catalog}
         song={current}
         programSong={programSong}
       />
@@ -129,7 +117,9 @@ export default function SongDetailPage() {
         {current.audio && (
           <Button
             type="button"
-            onClick={() => window.open(current.audio)}
+            onClick={() =>
+              window.open(current.audio!, '_blank', 'noopener,noreferrer')
+            }
             className="w-full bg-primary/15 text-primary border-none cursor-pointer"
           >
             Слушать аудио <Headphones />
@@ -137,14 +127,16 @@ export default function SongDetailPage() {
         )}
         {current.danceVideo && (
           <Button
-            onClick={() => window.open(current.danceVideo)}
+            onClick={() =>
+              window.open(current.danceVideo!, '_blank', 'noopener,noreferrer')
+            }
             type="button"
             className="w-full text-base bg-third/15 text-third"
           >
             Юльтон <PersonStanding />
           </Button>
         )}
-        <Button
+        {/* <Button
           type="button"
           variant="secondary"
           onClick={shareSong}
@@ -152,7 +144,7 @@ export default function SongDetailPage() {
           className="text-foreground bg-foreground/5"
         >
           {isCopied ? 'Скопировано' : 'Поделиться'} <Share2 />
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

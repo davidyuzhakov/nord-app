@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 import {
   ArrowRightLeftIcon,
   CheckIcon,
@@ -54,6 +54,12 @@ export function ChurchItem({
   >(null);
   const isBusy = disabled || pendingAction !== null;
 
+  useEffect(() => {
+    if (!isCopied) return;
+    const timeoutId = setTimeout(() => setIsCopied(false), 3000);
+    return () => clearTimeout(timeoutId);
+  }, [isCopied]);
+
   const handleNameSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const newName = inputName.trim();
@@ -66,7 +72,6 @@ export function ChurchItem({
     setPendingAction(null);
     if (updateChurchThunk.fulfilled.match(result)) {
       setIsEditOpen(false);
-      toast.success('Название церкви обновлено');
     }
   };
 
@@ -86,7 +91,6 @@ export function ChurchItem({
     setPendingAction(null);
     if (updateChurchThunk.fulfilled.match(result)) {
       setIsCopied(false);
-      toast.success('Ссылка приглашения обновлена');
     }
   };
 
@@ -100,11 +104,8 @@ export function ChurchItem({
       return;
 
     setPendingAction('delete');
-    const result = await dispatch(deleteChurchThunk(id));
+    await dispatch(deleteChurchThunk(id));
     setPendingAction(null);
-    if (deleteChurchThunk.fulfilled.match(result)) {
-      toast.success('Церковь удалена');
-    }
   };
 
   const copyInvite = async () => {
@@ -113,12 +114,6 @@ export function ChurchItem({
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setIsCopied(true);
-      toast.success('Ссылка приглашения скопирована', {
-        id: inviteId,
-        duration: 3000,
-        onDismiss: () => setIsCopied(false),
-        onAutoClose: () => setIsCopied(false),
-      });
     } catch {
       setIsCopied(false);
       toast.error('Не удалось скопировать ссылку. Попробуйте ещё раз.', {
@@ -139,7 +134,6 @@ export function ChurchItem({
           )}
         >
           <ChurchIcon
-            aria-hidden="true"
             className={isCurrent ? 'size-6' : 'size-5'}
             strokeWidth={1.5}
           />
@@ -178,19 +172,14 @@ export function ChurchItem({
                 variant="ghost"
                 size="icon"
                 className="rounded-full text-muted-foreground -mr-2"
-                aria-label={`Редактировать церковь ${name}`}
                 title="Редактировать церковь"
                 disabled={isBusy}
               >
-                <PencilIcon aria-hidden="true" />
+                <PencilIcon />
               </Button>
             }
           >
-            <form
-              onSubmit={handleNameSubmit}
-              aria-busy={pendingAction === 'rename'}
-              className="space-y-4 pt-2"
-            >
+            <form onSubmit={handleNameSubmit} className="space-y-4 pt-2">
               <div className="space-y-2">
                 <Label htmlFor={nameId}>Название церкви</Label>
                 <Input
@@ -221,9 +210,7 @@ export function ChurchItem({
                     isBusy || !inputName.trim() || inputName.trim() === name
                   }
                 >
-                  {pendingAction === 'rename' && (
-                    <Spinner aria-label="Сохранение названия" />
-                  )}
+                  {pendingAction === 'rename' && <Spinner />}
                   Сохранить
                 </Button>
               </div>
@@ -237,16 +224,10 @@ export function ChurchItem({
             variant="ghost"
             size="icon"
             className="rounded-full text-muted-foreground"
-            aria-label={`Переключиться в церковь ${name}`}
             onClick={onSwitch}
             disabled={isBusy || isSwitching}
-            aria-busy={isSwitching}
           >
-            {isSwitching ? (
-              <Spinner aria-label="Переключение церкви" />
-            ) : (
-              <ArrowRightLeftIcon aria-hidden="true" />
-            )}
+            {isSwitching ? <Spinner /> : <ArrowRightLeftIcon />}
           </Button>
         )}
       </div>
@@ -260,14 +241,9 @@ export function ChurchItem({
             Ссылка приглашения
           </Label>
           <div className="flex items-center gap-2 rounded-lg bg-muted-foreground/5 pr-1 pl-3">
-            <LinkIcon
-              aria-hidden="true"
-              size={15}
-              className="shrink-0 text-muted-foreground"
-            />
+            <LinkIcon size={15} className="shrink-0 text-muted-foreground" />
             <Input
               id={inviteId}
-              aria-label={`Ссылка приглашения в церковь ${name}`}
               value={inviteUrl}
               title="Ссылка приглашения"
               readOnly
@@ -279,21 +255,13 @@ export function ChurchItem({
               variant="ghost"
               size="icon"
               className="text-muted-foreground"
-              aria-label={
-                isCopied
-                  ? 'Ссылка приглашения скопирована'
-                  : `Копировать приглашение в церковь ${name}`
-              }
               onClick={copyInvite}
               disabled={isBusy}
             >
               {isCopied ? (
-                <CheckIcon
-                  aria-hidden="true"
-                  className="text-green-600 dark:text-green-400"
-                />
+                <CheckIcon className="text-green-600 dark:text-green-400" />
               ) : (
-                <CopyIcon aria-hidden="true" />
+                <CopyIcon />
               )}
             </Button>
             <Button
@@ -301,17 +269,11 @@ export function ChurchItem({
               variant="ghost"
               size="icon"
               className="text-muted-foreground -ml-2"
-              aria-label={`Обновить ссылку приглашения в церковь ${name}`}
               title="Обновить ссылку приглашения"
               disabled={isBusy}
-              aria-busy={pendingAction === 'refresh'}
               onClick={handleRefreshInvite}
             >
-              {pendingAction === 'refresh' ? (
-                <Spinner aria-label="Обновление ссылки приглашения" />
-              ) : (
-                <RefreshCwIcon aria-hidden="true" />
-              )}
+              {pendingAction === 'refresh' ? <Spinner /> : <RefreshCwIcon />}
             </Button>
           </div>
         </>
@@ -325,13 +287,9 @@ export function ChurchItem({
             size="sm"
             className="h-7 px-2 text-xs font-normal text-muted-foreground hover:bg-destructive/5 hover:text-destructive dark:hover:bg-destructive/10"
             disabled={isBusy}
-            aria-label={`Удалить церковь ${name}`}
-            aria-busy={pendingAction === 'delete'}
             onClick={handleDelete}
           >
-            {pendingAction === 'delete' && (
-              <Spinner aria-label="Удаление церкви" />
-            )}
+            {pendingAction === 'delete' && <Spinner />}
             Удалить
           </Button>
         </div>

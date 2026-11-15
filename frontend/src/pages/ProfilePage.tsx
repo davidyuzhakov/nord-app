@@ -76,14 +76,10 @@ export default function ProfilePage() {
 
   return (
     <main className="min-w-0 space-y-6 px-1 pt-6 pb-24">
-      <section aria-label="Личные данные" className="flex items-start gap-3">
+      <section className="flex items-start gap-3">
         <Avatar className="size-12">
           <AvatarFallback>
-            <UserRoundIcon
-              aria-hidden="true"
-              className="size-6"
-              strokeWidth={1.5}
-            />
+            <UserRoundIcon className="size-6" strokeWidth={1.5} />
           </AvatarFallback>
         </Avatar>
 
@@ -113,19 +109,14 @@ export default function ProfilePage() {
               variant="ghost"
               size="icon"
               className="rounded-full text-muted-foreground border"
-              aria-label="Редактировать имя"
               title="Редактировать имя"
               disabled={loading || churchesLoading || !user}
             >
-              <PencilIcon aria-hidden="true" />
+              <PencilIcon />
             </Button>
           }
         >
-          <form
-            onSubmit={handleNameSubmit}
-            aria-busy={loading}
-            className="space-y-4 pt-2"
-          >
+          <form onSubmit={handleNameSubmit} className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="profile-full-name">Фамилия и имя</Label>
               <Input
@@ -154,7 +145,7 @@ export default function ProfilePage() {
                 type="submit"
                 disabled={loading || user?.fullName === inputName}
               >
-                {loading && <Spinner aria-label="Сохранение имени" />}
+                {loading && <Spinner />}
                 Сохранить
               </Button>
             </div>
@@ -162,10 +153,7 @@ export default function ProfilePage() {
         </Modal>
       </section>
 
-      <section
-        aria-labelledby="profile-settings-title"
-        className="dark:bg-secondary/30 bg-secondary/60 p-4 rounded-lg"
-      >
+      <section className="dark:bg-secondary/30 bg-secondary/60 p-4 rounded-lg">
         <h2
           id="profile-settings-title"
           className="mb-1 text-xs font-medium text-muted-foreground"
@@ -215,47 +203,35 @@ export default function ProfilePage() {
               Размер текста песни
             </span>
           </div>
-          <div
-            role="group"
-            aria-labelledby="profile-song-font-size-label"
-            className="flex shrink-0 items-center gap-1 rounded-lg bg-muted-foreground/5 p-0.5"
-          >
+          <div className="flex shrink-0 items-center gap-1 rounded-lg bg-muted-foreground/5 p-0.5">
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Уменьшить размер текста песни"
               disabled={songFontSize <= SONG_FONT_SIZE.min}
               className="disabled:opacity-30"
               onClick={() => dispatch(updateSongFontSize(songFontSize - 1))}
             >
-              <MinusIcon aria-hidden="true" />
+              <MinusIcon />
             </Button>
-            <output
-              aria-live="polite"
-              className="min-w-10 text-center text-xs font-medium tabular-nums"
-            >
+            <output className="min-w-10 text-center text-xs font-medium tabular-nums">
               {songFontSize} px
             </output>
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Увеличить размер текста песни"
               className="disabled:opacity-30"
               disabled={songFontSize >= SONG_FONT_SIZE.max}
               onClick={() => dispatch(updateSongFontSize(songFontSize + 1))}
             >
-              <PlusIcon aria-hidden="true" />
+              <PlusIcon />
             </Button>
           </div>
         </div>
       </section>
 
-      <section
-        aria-labelledby="profile-churches-title"
-        className="space-y-5 dark:bg-secondary/30 bg-secondary/60 p-4 rounded-lg"
-      >
+      <section className="space-y-5 dark:bg-secondary/30 bg-secondary/60 p-4 rounded-lg">
         <div className="flex items-center justify-between gap-3">
           <h2
             id="profile-churches-title"
@@ -267,21 +243,18 @@ export default function ProfilePage() {
             type="button"
             variant="ghost"
             size="sm"
-            className="py-0 h-auto gap-1 px-2 text-xs text-muted-foreground hover:bg-transparent"
+            className="py-0 h-auto gap-1 px-2 text-xs text-muted-foreground hover:bg-transparent dark:hover:bg-transparent"
             disabled={loading || churchesLoading}
             onClick={() => navigate('/welcome')}
           >
-            <PlusIcon aria-hidden="true" className="size-3.5" />
+            <PlusIcon className="size-3.5" />
             Создать церковь
           </Button>
         </div>
 
         {churchesLoading && churches.length === 0 ? (
-          <p
-            role="status"
-            className="flex items-center gap-2 text-sm text-muted-foreground"
-          >
-            <Spinner aria-hidden="true" />
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Spinner />
             Загрузка церквей
           </p>
         ) : (
@@ -312,14 +285,9 @@ export default function ProfilePage() {
         variant="destructive"
         className="mr-0 w-full"
         disabled={loading || churchesLoading}
-        aria-busy={loading && !isEditOpen}
         onClick={logoutHandler}
       >
-        {loading && !isEditOpen ? (
-          <Spinner aria-label="Выход из аккаунта" />
-        ) : (
-          <LogOutIcon aria-hidden="true" />
-        )}
+        {loading && !isEditOpen ? <Spinner /> : <LogOutIcon />}
         Выйти из аккаунта
       </Button>
     </main>

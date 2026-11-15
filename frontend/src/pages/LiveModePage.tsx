@@ -1,7 +1,7 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import { Song } from '@/components/Song';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Swiper as SwiperType } from 'swiper';
 import {
   Drawer,
@@ -10,11 +10,11 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
-import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Navigate } from 'react-router-dom';
-import type { Program } from '@/models/Program';
 import { Loading } from '@/components/Loading';
 import { Header } from '@/components/Header';
+import { fetchPrograms } from '@/store/reducers/programSlice';
 
 const styles = [
   'text-primary bg-primary/25',
@@ -26,20 +26,40 @@ const styles = [
 
 const LiveModePage = () => {
   const { items, loading } = useAppSelector((state) => state.program);
+  const churchId = useAppSelector(
+    (state) => state.user.current?.activeChurchId,
+  );
+  const dispatch = useAppDispatch();
   const programs = items.filter((item) => !item.isArchived);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(programs.length === 1 ? false : true);
-  const [currentProgram, setCurrentProgram] = useState<Program>(programs[0]);
+  const [currentProgramId, setCurrentProgramId] = useState<number | null>(null);
+  const currentProgram =
+    programs.find((program) => program.id === currentProgramId) ?? programs[0];
+  const [loaded, setLoaded] = useState(false);
 
-  if (loading) return <Loading />;
+  useEffect(() => {
+    let active = true;
+    setLoaded(false);
+    const request = dispatch(fetchPrograms());
+    request.then(() => {
+      if (active) setLoaded(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, churchId]);
+
+  if (loading || !loaded) return <Loading />;
 
   if (programs.length === 0 || !currentProgram) {
     return <Navigate to={'/'} />;
   }
 
   const totalSlides = currentProgram.songs.length;
-  const programStructure = currentProgram.songs[activeIndex].song.structure;
+  const activeSong =
+    currentProgram.songs[activeIndex] ?? currentProgram.songs[0];
 
   const handleSlideChange = (swiper: SwiperType) => {
     setActiveIndex(swiper.activeIndex);
@@ -49,14 +69,14 @@ const LiveModePage = () => {
   return (
     <>
       <div className="-mx-3 relative pb-0">
-        {totalSlides > 0 ? (
+        {activeSong ? (
           <>
             <Header
-              songId={currentProgram.songs[activeIndex].songId}
-              structure={programStructure}
+              songId={activeSong.songId}
+              structure={activeSong.song.structure}
             >
               <h2 className="text-[22px] font-semibold truncate">
-                {currentProgram.songs[activeIndex].song.name}
+                {activeSong.song.name}
               </h2>
               <div className="flex gap-1 z-10">
                 {Array.from({ length: totalSlides }).map((_, index) => (
@@ -67,20 +87,20 @@ const LiveModePage = () => {
                         ? 'bg-primary'
                         : 'bg-background dark:bg-secondary border border-gray-400'
                     }`}
-                    aria-label={`Перейти к слайду ${index + 1}`}
                   />
                 ))}
               </div>
             </Header>
 
             <Swiper
+              key={currentProgram.id}
               spaceBetween={50}
               slidesPerView={1}
               autoHeight
               onSlideChange={handleSlideChange}
             >
               {currentProgram.songs.map((song) => (
-                <SwiperSlide className="pb-[74px] pt-3">
+                <SwiperSlide key={song.id} className="pb-[74px] pt-3">
                   <Song song={song.song} programSong={song} />
                 </SwiperSlide>
               ))}
@@ -103,7 +123,8 @@ const LiveModePage = () => {
             {programs.map((program, i) => (
               <Button
                 onClick={() => {
-                  setCurrentProgram(program);
+                  setCurrentProgramId(program.id);
+                  setActiveIndex(0);
                   setIsOpen(false);
                 }}
                 className={`w-full ${styles[i] ?? 'bg-primary/25 text-primary'} py-7 text-lg font-medium`}

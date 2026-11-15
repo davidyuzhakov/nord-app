@@ -44,10 +44,7 @@ export function Logo({
           className={`${currentSize.text} tracking-tighter select-none font-bold flex gap-0.5 items-end`}
         >
           Nord App
-          <span
-            aria-hidden="true"
-            className="size-1.5 rounded-full bg-primary -translate-y-1"
-          />
+          <span className="size-1.5 rounded-full bg-primary -translate-y-1" />
         </span>
       )}
     </div>
