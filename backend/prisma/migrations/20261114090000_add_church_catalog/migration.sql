@@ -30,14 +30,10 @@ ALTER TABLE "Program" ADD COLUMN "churchId" UUID;
 
 DO $$
 DECLARE
-    -- Set this to the existing target Church.id before deploying to production.
-    target_church_id UUID := NULL;
+    -- Legacy programs and catalog copies belong to Благодать север.
+    target_church_id CONSTANT UUID := '7c34aac5-cbe0-4a99-ae7e-759443677dfb';
 BEGIN
     IF EXISTS (SELECT 1 FROM "Song") OR EXISTS (SELECT 1 FROM "Program") THEN
-        IF target_church_id IS NULL THEN
-            RAISE EXCEPTION 'Set target_church_id in this migration to transfer existing songs and programs';
-        END IF;
-
         PERFORM 1 FROM "Church" WHERE "id" = target_church_id FOR KEY SHARE;
         IF NOT FOUND THEN
             RAISE EXCEPTION 'Target church % does not exist', target_church_id;
